@@ -12,6 +12,7 @@ const pool = mysql.createPool({
 });
 
 const app = express();
+app.use(express.json());
 const port = 3000;
 
 const wiseSayings = [
@@ -29,6 +30,38 @@ app.get("/wise-sayings", async (req, res) => {
   const [rows] = await pool.query("SELECT * FROM wise_saying ORDER BY id DESC");
 
   res.json(rows);
+});
+
+app.post("/wise-sayings", async (req, res) => {
+  const { author, content } = req.body;
+
+  if (!author) {
+    res.status(400).json({
+      msg: "author required",
+    });
+    return;
+  }
+
+  if (!content) {
+    res.status(400).json({
+      msg: "content required",
+    });
+    return;
+  }
+
+  const [rs] = await pool.query(
+    `
+    INSERT INTO wise_saying
+    SET regDate = NOW(),
+    content = ?,
+    author = ?
+    `,
+    [content, author]
+  );
+
+  res.status(201).json({
+    id: rs.insertId,
+  });
 });
 
 app.get("/wise-sayings/:id", async (req, res) => {
